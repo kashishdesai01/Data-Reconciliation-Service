@@ -1,0 +1,6 @@
+package com.masterdata.reconciliation.api.model;
+
+import java.util.UUID;
+
+public record MatchRunResponse(UUID runId, String status) {
+}

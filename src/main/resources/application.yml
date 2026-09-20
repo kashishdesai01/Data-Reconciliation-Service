@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: master-data-reconciliation
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/reconciliation}
+    username: ${DB_USER:reconciliation}
+    password: ${DB_PASSWORD:reconciliation}
+    hikari:
+      maximum-pool-size: ${DB_POOL_SIZE:20}
+      minimum-idle: 2
+      connection-timeout: 30000
+  flyway:
+    enabled: true
+  batch:
+    jdbc:
+      initialize-schema: always
+    job:
+      enabled: false
+  jackson:
+    default-property-inclusion: non_null
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+server:
+  shutdown: graceful
+  error:
+    include-message: never
+    include-binding-errors: never
+
+reconciliation:
+  scoring-threads: ${SCORING_THREADS:4}
+  reviewer-username: ${REVIEWER_USERNAME:reviewer}
+  reviewer-password: ${REVIEWER_PASSWORD:change-me}
+  default-country: ${DEFAULT_COUNTRY:US}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  config: classpath:logback-spring.xml
+

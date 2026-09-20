@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Backend tests
+        run: mvn --batch-mode test
+      - name: Frontend audit and build
+        working-directory: ui
+        run: |
+          npm ci
+          npm audit --audit-level=high
+          npm run build
+      - name: Build local deployment
+        run: docker compose up --build -d
+      - name: Synthetic quality gates
+        run: ./scripts/seed-and-run.sh
+      - name: Container logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop local deployment
+        if: always()
+        run: docker compose down -v

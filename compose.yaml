@@ -1,0 +1,48 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: reconciliation
+      POSTGRES_USER: reconciliation
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-reconciliation}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U reconciliation -d reconciliation"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - reconciliation-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  api:
+    build: .
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/reconciliation
+      DB_USER: reconciliation
+      DB_PASSWORD: ${DB_PASSWORD:-reconciliation}
+      REVIEWER_USERNAME: ${REVIEWER_USERNAME:-reviewer}
+      REVIEWER_PASSWORD: ${REVIEWER_PASSWORD:-change-me}
+      SCORING_THREADS: ${SCORING_THREADS:-4}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    ports:
+      - "8080:8080"
+
+  ui:
+    build: ./ui
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "3000:80"
+
+volumes:
+  reconciliation-data:
+

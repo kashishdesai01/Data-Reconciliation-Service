@@ -1,15 +1,15 @@
 # Data Reconciliation Service
 
-This project takes customer records from different source systems and works out which records belong to the same person. It keeps every source revision, explains why two records were considered a match, builds a versioned golden record, and sends uncertain cases to a small review application instead of guessing.
+This project takes customer records from different source systems and works out which records belong to the same person. It keeps every source revision, explains why two records were considered a match, builds a versioned canonical customer record, and sends uncertain cases to a small review application instead of guessing.
 
 The service is designed to be easy to run locally and easy to discuss in a code review. The implementation favors deterministic results, explicit transaction boundaries, and an audit trail over hidden matching behavior.
 
 ## What the project includes
 
-- A Spring Boot API for ingestion, reconciliation runs, golden records, and human review.
+- A Spring Boot API for ingestion, reconciliation runs, canonical customer record, and human review.
 - PostgreSQL storage with Flyway migrations and database-backed Spring Batch state.
 - Deterministic normalization, blocking, weighted scoring, and complete-link cluster validation.
-- Versioned golden records with field-level provenance.
+- Versioned canonical customer records with field-level provenance.
 - Append-only audit history for merges, splits, and review decisions.
 - A React review UI for inspecting evidence and confirming or rejecting a match.
 - A repeatable 1,000-record dataset with automated precision and recall checks.
@@ -78,7 +78,7 @@ Each run follows the same seven stages:
 3. Generate candidate pairs using exact and phonetic blocking keys.
 4. Score candidates in parallel using the ruleset pinned to the run.
 5. Apply automatic matches only when every pair across the two clusters passes complete-link validation.
-6. Build or update golden records and record the source revision chosen for every field.
+6. Build or update canonical customer record and record the source revision chosen for every field.
 7. Publish ambiguous candidates and cluster conflicts to the review queue.
 
 The service never treats a high pair score as permission to join two unsafe clusters. A human `NO_MATCH` decision becomes a cannot-link rule, contradictory identifiers require review, and changed records that would move between existing goldens are not silently relinked.
